@@ -16,7 +16,7 @@ public class Write_Apo{
 		try{
 		System.out.println("G2: " + GetApo);
 			this.Apo = GetApo;
-			BufferedWriter br = new BufferedWriter(new FileWriter(new File("./toDo.txt")));
+			BufferedWriter br = new BufferedWriter(new FileWriter(new File("./toDo.txt"),true));
 			br.write(this.Apo + "\n");
 			br.close();
 		}

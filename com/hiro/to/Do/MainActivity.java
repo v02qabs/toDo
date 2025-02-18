@@ -5,7 +5,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class MainActivity implements ActionListener, WindowListener {
-    private DefaultListModel<String> model;
     private JList<String> list;
     private JFrame frame_add_apo;
     private JTextArea area_apo;
@@ -17,7 +16,7 @@ public class MainActivity implements ActionListener, WindowListener {
     }
 
     public MainActivity() {
-        model = new DefaultListModel<>();
+        TaskManager.getInstance(); // TaskManager の初期化
     }
 
     private void init() {
@@ -27,13 +26,15 @@ public class MainActivity implements ActionListener, WindowListener {
         frame.setLayout(new BorderLayout());
         frame.addWindowListener(this);
 
-        // Initialize List and Model
+        // 共有モデルの取得
+        DefaultListModel<String> model = TaskManager.getInstance().getModel();
         model.addElement("2024-02-16 火曜日、９時出社");
+
         list = new JList<>(model);
         JScrollPane scrollPane = new JScrollPane(list);
         frame.add(scrollPane, BorderLayout.CENTER);
 
-        // Buttons Panel
+        // ボタンパネル
         JPanel buttonPanel = new JPanel(new FlowLayout());
 
         JButton add_button = new JButton("予定を追加");
@@ -49,12 +50,6 @@ public class MainActivity implements ActionListener, WindowListener {
     }
 
     @Override
-    public void windowActivated(WindowEvent e) {
-       	System.out.println("activated");
-       // new Open_Apo(model); // Ensure model is initialized before this call
-    }
-
-    @Override
     public void actionPerformed(ActionEvent e) {
         String command = e.getActionCommand();
 
@@ -66,13 +61,13 @@ public class MainActivity implements ActionListener, WindowListener {
             }
             area_get_text_apo = area_apo.getText().trim();
             if (!area_get_text_apo.isEmpty()) {
-                model.addElement(area_get_text_apo);
+                TaskManager.getInstance().getModel().addElement(area_get_text_apo);
                 new Write_Apo(area_get_text_apo);
             }
         } else if (command.equals("予定を削除")) {
             int index = list.getSelectedIndex();
             if (index >= 0) {
-                model.remove(index);
+                TaskManager.getInstance().removeItem(index);  // ✅ 修正ポイント
             } else {
                 JOptionPane.showMessageDialog(null, "削除する予定を選択してください。", "エラー", JOptionPane.ERROR_MESSAGE);
             }
@@ -95,15 +90,16 @@ public class MainActivity implements ActionListener, WindowListener {
         frame_add_apo.setVisible(true);
     }
 
-    // Empty implementations for WindowListener
-    @Override public void windowOpened(WindowEvent e) {
-    	 new Open_Apo(model); 
-    
+    @Override
+    public void windowOpened(WindowEvent e) {
+       //new Open_Apo(TaskManager.getInstance().getModel());
     }
+
     @Override public void windowClosing(WindowEvent e) {}
     @Override public void windowClosed(WindowEvent e) {}
     @Override public void windowIconified(WindowEvent e) {}
     @Override public void windowDeiconified(WindowEvent e) {}
     @Override public void windowDeactivated(WindowEvent e) {}
+    @Override public void windowActivated(WindowEvent e) {}
 }
 
