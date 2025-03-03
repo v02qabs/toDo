@@ -19,6 +19,7 @@ public class ScheduleGUI extends JFrame {
     private final JTextArea scheduleTextArea = new JTextArea(10, 30);
 
     public ScheduleGUI() {
+		
         setTitle("スケジュール管理");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 350);
@@ -80,8 +81,8 @@ public class ScheduleGUI extends JFrame {
         }
         scheduleTextArea.setText(sb.toString());
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(ScheduleGUI::new);
-    }
+    
+    /*public static void main(String[] args) {
+        
+    }*/
 }
