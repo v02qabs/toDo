@@ -82,7 +82,8 @@ public class ScheduleGUI extends JFrame {
         scheduleTextArea.setText(sb.toString());
     }
     
-    /*public static void main(String[] args) {
-        
-    }*/
+    public static void main(String[] args){
+		new ScheduleGUI();
+	}
+	
 }

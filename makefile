@@ -11,7 +11,7 @@ Calendar:
 	java com.hiro.to.Do.CalendarWithtodo.CalendarWithTodo
 
 ScheduleGUI:
-	java com.hiro.to.Do.ScheduleGUI.ScheduleManager
+	java com.hiro.to.Do.ScheduleGUI.
 
 Schedule:
 	java com.hiro.to.Do.Schedule.Schedule

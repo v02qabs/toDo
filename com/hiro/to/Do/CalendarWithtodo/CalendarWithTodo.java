@@ -1,4 +1,4 @@
-package com.hiro.to.Do.CalendarWithtodo;
+package com.hiro.to.Do.CalendarWithTodo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,16 +9,16 @@ import java.util.*;
 public class CalendarWithTodo extends JFrame {
     private static final int DAYS_IN_WEEK = 7;
     private static final String[] WEEK_DAYS = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-    public static final String[] HOURS = { 
-        "00:00", "01:00", "02:00", "03:00", "04:00", "05:00",
-        "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
-        "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
-        "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"
+    public static final String[] HOURS = {
+            "00:00", "01:00", "02:00", "03:00", "04:00", "05:00",
+            "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
+            "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
+            "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"
     };
 
     private JPanel calendarPanel;
     private JLabel selectedDateLabel;
-    private HashMap<String, String> todoMap;
+    private HashMap<String, HashMap<String, String>> todoMap = new HashMap<>();
     private String selectedDate;
     private final String FILE_PATH = "todo.txt";
 
@@ -28,13 +28,16 @@ public class CalendarWithTodo extends JFrame {
     private int selectedYear;
     private int selectedMonth;
 
+    // JList とモデル
+    private DefaultListModel<String> listModel = new DefaultListModel<>();
+    private JList<String> scheduleList = new JList<>(listModel);
+
     public CalendarWithTodo() {
         setTitle("Calendar with ToDo List");
-        setSize(600, 600);
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        todoMap = new HashMap<>();
         loadTodoFromFile();
 
         // 年と月の選択パネル
@@ -47,8 +50,8 @@ public class CalendarWithTodo extends JFrame {
         selectedYear = (int) yearComboBox.getSelectedItem();
 
         monthComboBox = new JComboBox<>(new String[]{
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
         });
         monthComboBox.setSelectedIndex(Calendar.getInstance().get(Calendar.MONTH));
         selectedMonth = monthComboBox.getSelectedIndex();
@@ -67,7 +70,7 @@ public class CalendarWithTodo extends JFrame {
         viewerButton.setEnabled(false);
         viewerButton.addActionListener(e -> {
             if (selectedDate != null) {
-                new ToDoViewer(this, selectedDate);
+                displaySchedule(selectedDate);
             }
         });
 
@@ -79,14 +82,23 @@ public class CalendarWithTodo extends JFrame {
         add(topPanel, BorderLayout.NORTH);
         add(selectedDateLabel, BorderLayout.CENTER);
         add(calendarPanel, BorderLayout.SOUTH);
+
+        // JList を右側に配置
+        JScrollPane scrollPane = new JScrollPane(scheduleList);
+        scrollPane.setPreferredSize(new Dimension(300, 400));
+        add(scrollPane, BorderLayout.EAST);
+
+        setVisible(true);
     }
 
+    // 年・月を更新
     private void updateSelectedYearMonth() {
         selectedYear = (int) yearComboBox.getSelectedItem();
         selectedMonth = monthComboBox.getSelectedIndex();
         updateCalendar();
     }
 
+    // カレンダーを更新
     private void updateCalendar() {
         calendarPanel.removeAll();
 
@@ -113,49 +125,40 @@ public class CalendarWithTodo extends JFrame {
         calendarPanel.repaint();
     }
 
+    // 日付を選択
     private void selectDate(int day) {
         selectedDate = selectedYear + "-" + (selectedMonth + 1) + "-" + day;
         selectedDateLabel.setText("Selected Date: " + selectedDate);
         viewerButton.setEnabled(true);
-        new TodoEditor(this, selectedDate);
+        displaySchedule(selectedDate);
     }
 
-    private int getDaysInMonth(int year, int month) {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.YEAR, year);
-        cal.set(Calendar.MONTH, month);
-        return cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-    }
+    // 予定をJListで表示
+    private void displaySchedule(String date) {
+        listModel.clear(); // クリアして新しいデータをセット
 
-    private int getFirstDayOfMonth(int year, int month) {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.YEAR, year);
-        cal.set(Calendar.MONTH, month);
-        cal.set(Calendar.DAY_OF_MONTH, 1);
-        return cal.get(Calendar.DAY_OF_WEEK);
-    }
-
-    public void saveTodoToFile() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (Map.Entry<String, String> entry : todoMap.entrySet()) {
-                writer.write(entry.getKey() + "###" + entry.getValue());
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        HashMap<String, String> schedule = todoMap.getOrDefault(date, new HashMap<>());
+        for (String hour : HOURS) {
+            String event = schedule.getOrDefault(hour, "（予定なし）");
+            listModel.addElement(hour + " : " + event);
         }
     }
 
-    private void loadTodoFromFile() {
-        File file = new File(FILE_PATH);
-        if (!file.exists()) return;
+    // 予定を追加
+    public void addSchedule(String date, String time, String event) {
+        todoMap.putIfAbsent(date, new HashMap<>());
+        todoMap.get(date).put(time, event);
+        saveTodoToFile(); // 保存
+        displaySchedule(date); // 更新
+    }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split("###", 2);
-                if (parts.length == 2) {
-                    todoMap.put(parts[0], parts[1]);
+    // 予定をファイルに保存
+    public void saveTodoToFile() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Map.Entry<String, HashMap<String, String>> dateEntry : todoMap.entrySet()) {
+                for (Map.Entry<String, String> entry : dateEntry.getValue().entrySet()) {
+                    writer.write(dateEntry.getKey() + "###" + entry.getKey() + "###" + entry.getValue());
+                    writer.newLine();
                 }
             }
         } catch (IOException e) {
@@ -163,10 +166,26 @@ public class CalendarWithTodo extends JFrame {
         }
     }
 
-    public HashMap<String, String> getTodoMap() {
-        return todoMap;
+    // ファイルから予定を読み込み
+    private void loadTodoFromFile() {
+        File file = new File(FILE_PATH);
+        if (!file.exists()) return;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split("###", 3);
+                if (parts.length == 3) {
+                    todoMap.putIfAbsent(parts[0], new HashMap<>());
+                    todoMap.get(parts[0]).put(parts[1], parts[2]);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
+    // メイン
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             CalendarWithTodo frame = new CalendarWithTodo();
