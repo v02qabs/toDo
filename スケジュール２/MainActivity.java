@@ -4,6 +4,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import javax.swing.*;
 import java.io.*;
+import java.time.*;
+import java.time.format.*;
 
 class MainActivity extends JFrame {
     private JPanel calendarPanel;
@@ -66,19 +68,61 @@ class MainActivity extends JFrame {
         monthLabel.setText(getCurrentMonth());
         updateCalendar();
     }
-    public void openning(){
-    	try{
-    		BufferedReader br = new BufferedReader(new FileReader(new File("todo.csv")));
-    		String line;
-    		while((line = br.readLine()) != null){
-    			//System.out.println(line);
-    			String array_comma[]= line.split(",");
-    		}
-    		
-    		    		
-    	}
-    	catch(Exception error){}
-   } 	
+public void openning() {
+    try {
+        BufferedReader br = new BufferedReader(new FileReader(new File("todo.csv")));
+        String line;
+        while ((line = br.readLine()) != null) {
+            // Split by comma to separate date and contents
+            String[] array_comma = line.split(",");
+            
+            // Extract the date part (first part of the split)
+            String dateString = array_comma[0];
+            String content = array_comma[1];
+            
+            // Parse the date string into a LocalDate object (adjust format as necessary)
+           try{
+           		DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy/MM/dd_HH:mm");
+            	LocalDate date = LocalDate.parse(dateString, formatter1);
+            	       
+            	DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("dd");
+
+        		// LocalDate を文字列に変換
+        		String dateString2 = date.format(formatter2);
+            System.out.println("Date: " + dateString2 + ", Content: " + content);
+            	selected_date(dateString2, content);
+            	}
+            	catch(Exception error){}
+            
+            
+            // Print or process the date and content
+        }
+        br.close();
+    } catch (Exception error) {
+        error.printStackTrace();  // Print any exceptions for debugging
+    }
+
+}
+	public void selected_date(String date, String contents){
+		System.out.println("date: " + date);
+		if(date != null){
+			System.out.println(date + " : " + contents);
+    if (date != null) {
+        //System.out.println(date + " : " + contents);
+        // ボタンのテキストを変更
+        for (Component comp : calendarPanel.getComponents()) {
+            if (comp instanceof JButton) {
+                JButton button = (JButton) comp;
+                if (button.getText().equals(date)) {
+                    button.setText("E"); // ボタンのテキストを更新
+                    break;
+                }
+            }
+        }
+        }
+        }
+        	
+}	
     public void openTodoFile(){
 	System.out.println("ファイルを開きます。");
 	if(new File("todo.csv").exists()){
@@ -89,7 +133,7 @@ class MainActivity extends JFrame {
 		System.out.println("ファイル [ todo.csv ] は不在です。");
 	}
 	}
-
+	JButton dayButton;
     private void updateCalendar() {
         calendarPanel.removeAll();
         String[] weekDays = {"日", "月", "火", "水", "木", "金", "土"};
@@ -109,7 +153,7 @@ class MainActivity extends JFrame {
         for (int day = 1; day <= daysInMonth; day++) {
         	final int today = day;
         
-            JButton dayButton = new JButton(String.valueOf(today));
+            dayButton = new JButton(String.valueOf(today));
             dayButton.addActionListener(e -> showAppointments(today));
             calendarPanel.add(dayButton);
         }
