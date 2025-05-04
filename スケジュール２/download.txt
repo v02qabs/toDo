@@ -26,37 +26,10 @@ class MainActivity extends JFrame {
         return sdf.format(calendar.getTime()) + String.format("%02d", day);
     }
 
-    private void showвыборDialog(int day) { // "выбор" はロシア語で「選択」の意味
-        String[] options = {"Viewer", "Writer"};
-        int choice = JOptionPane.showOptionDialog(this, "Viewer または Writer を選択してください",
-                "選択", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
-                null, options, options[0]);
-
-        if (choice == 0) { // Viewer が選択された場合
-            showAppointments(day);
-        } else if (choice == 1) { // Writer が選択された場合
-            showWriter(day);
-        }
-    }
-
     private void showAppointments(int day) {
-        String selectedDatePrefix = getSelectedDate(day); // 日付のプレフィックスを取得
-        JFrame view_schedule = new JFrame("day: " + day + " の予定"); // タイトルを変更
-        view_schedule.setLayout(new BorderLayout());
-
-        JTextArea viewArea = new JTextArea();
-        viewArea.setEditable(false); // 編集不可にする
-        view_schedule.add(new JScrollPane(viewArea), BorderLayout.CENTER); // JScrollPaneに追加
-
-        loadScheduleToView(selectedDatePrefix, viewArea); // 予定をロードして表示
-
-        view_schedule.setBounds(0, 0, 300, 400);
-        view_schedule.setVisible(true);
-    }
-
-    private void showWriter(int day) {
         String selectedDate = getSelectedDate(day);
-        JFrame edit_schedule = new JFrame("day: " + day + " の予定編集"); // タイトルを変更
+
+        JFrame edit_schedule = new JFrame("day: " + day);
         edit_schedule.setLayout(null);
 
         area = new JTextArea();
@@ -114,6 +87,7 @@ class MainActivity extends JFrame {
                 openning();
             }
         });
+
         setVisible(true);
     }
 
@@ -133,7 +107,6 @@ class MainActivity extends JFrame {
     private void updateCalendar() {
         loadScheduledDays();
         calendarPanel.removeAll();
-
         Calendar tempCal = (Calendar) calendar.clone();
         tempCal.set(Calendar.DAY_OF_MONTH, 1);
         int firstDayOfWeek = tempCal.get(Calendar.DAY_OF_WEEK) - 1;
@@ -146,12 +119,12 @@ class MainActivity extends JFrame {
         for (int day = 1; day <= daysInMonth; day++) {
             String displayText = String.valueOf(day);
             if (scheduledDays.contains(String.valueOf(day))) {
-                displayText = "<E>";
+                displayText = "<E>";  // ←予定ありマーク
             }
 
             JButton dayButton = new JButton(displayText);
             int selectedDay = day;
-            dayButton.addActionListener(e -> showвыборDialog(selectedDay)); // ここを変更
+            dayButton.addActionListener(e -> showAppointments(selectedDay));
             calendarPanel.add(dayButton);
         }
 
@@ -161,15 +134,12 @@ class MainActivity extends JFrame {
 
     public void openning() {
         scheduledDays.clear();
-        lines.clear();
-        // リストをクリア
+        lines.clear(); // リストをクリア
         try (BufferedReader br = new BufferedReader(new FileReader("todo.csv"))) {
             String line;
             while ((line = br.readLine()) != null) {
-                if (line.startsWith("date")) continue;
-                // ヘッダー行をスキップ
-                lines.add(line);
-                // 全ての行をリストに保持
+                if (line.startsWith("date")) continue; // ヘッダー行をスキップ
+                lines.add(line); // 全ての行をリストに保持
 
                 String[] parts = line.split(",");
                 if (parts.length < 1) continue;
@@ -178,10 +148,9 @@ class MainActivity extends JFrame {
 
                 try {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd_HH:mm");
-                    LocalDate date = LocalDate.parse(dateTime.substring(0, 10) + "_00:00", formatter); // 日付部分のみを解析
+                    LocalDate date = LocalDate.parse(dateTime, formatter);
                     int day = date.getDayOfMonth();
-                    scheduledDays.add(String.valueOf(day));
-                    // 例: "19"
+                    scheduledDays.add(String.valueOf(day)); // 例: "19"
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -211,10 +180,10 @@ class MainActivity extends JFrame {
         String selectedDate = getSelectedDate(day);
         String selectedTime = (String) comboBox.getSelectedItem();
         String newSchedule = selectedDate + "_" + selectedTime + "," + area.getText();
+
         boolean updated = false;
         for (int i = 0; i < lines.size(); i++) {
-            String existingDateTime = lines.get(i).split(",")[0];
-            if (existingDateTime.startsWith(selectedDate + "_")) { // 日付が一致する場合
+            if (lines.get(i).startsWith(selectedDate + "_")) { // 日付_で始まる行を検索
                 lines.set(i, newSchedule); // 上書き
                 updated = true;
                 break;
@@ -225,9 +194,8 @@ class MainActivity extends JFrame {
         }
 
         // CSVファイルに書き戻し
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter("todo.csv",true))) {
-            bw.write("date,contents\n");
-            // ヘッダー
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter("todo.csv"))) {
+            bw.write("date,contents\n"); // ヘッダー
             for (String line : lines) {
                 if (!line.startsWith("date,")) { // ヘッダー以外を書き込む
                     bw.write(line + "\n");
@@ -248,15 +216,13 @@ class MainActivity extends JFrame {
             String line;
             while ((line = br.readLine()) != null) {
                 if (line.startsWith("date,")) continue;
+
                 String[] parts = line.split(",");
                 if (parts.length < 2) continue;
 
-                String datePart = parts[0];
-                // 例: "2025/04/20_10:00"
-                String dayStr = datePart.substring(8, 10);
-                // "20"
-                if (dayStr.startsWith("0")) dayStr = dayStr.substring(1);
-                // "01" -> "1"
+                String datePart = parts[0]; // 例: "2025/04/20_10:00"
+                String dayStr = datePart.substring(8, 10); // "20"
+                if (dayStr.startsWith("0")) dayStr = dayStr.substring(1); // "01" -> "1"
                 scheduledDays.add(dayStr);
             }
         } catch (IOException e) {
@@ -265,8 +231,7 @@ class MainActivity extends JFrame {
     }
 
     private void loadScheduleToEdit(String selectedDate) {
-        area.setText("");
-        // クリア
+        area.setText(""); // クリア
         try (BufferedReader br = new BufferedReader(new FileReader("todo.csv"))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -281,31 +246,6 @@ class MainActivity extends JFrame {
                     }
                     break;
                 }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void loadScheduleToView(String selectedDatePrefix, JTextArea viewArea) {
-        viewArea.setText(""); // クリア
-        try (BufferedReader br = new BufferedReader(new FileReader("todo.csv"))) {
-            String line;
-            boolean scheduleFound = false; // 予定が見つかったかどうかを追跡
-            while ((line = br.readLine()) != null) {
-                if (line.startsWith("date,")) {
-                    continue;
-                }
-                if (line.startsWith(selectedDatePrefix + "_")) { // 選択された日付で始まる行を検索
-                    String[] parts = line.split(",");
-                    if (parts.length > 1) {
-                        viewArea.append(parts[0].substring(11, 16) + " : " + parts[1] + "\n"); // 時刻と内容を表示
-                        scheduleFound = true;
-                    }
-                }
-            }
-            if (!scheduleFound) {
-                viewArea.append("予定はありません\n");
             }
         } catch (IOException e) {
             e.printStackTrace();
