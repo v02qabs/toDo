@@ -1,5 +1,0 @@
-install:
-	javac com/hiro/DiaryGUI/MainActivity.java
-
-execjava:
-	java com.hiro.DiaryGUI.MainActivity
