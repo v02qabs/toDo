@@ -216,7 +216,7 @@ public class DiaryApp extends JFrame {
 
                     for (int i = 1; i < lines.length; i++) { // Skip the timestamp line
                         String line = lines[i];
-                        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("[IMAGE_(d+):\s*(.*?)]");
+                        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\[IMAGE_(\\d+):\\s*(.*?)\\]");
                         java.util.regex.Matcher matcher = pattern.matcher(line);
                         if (matcher.find()) {
                             int index = Integer.parseInt(matcher.group(1));
