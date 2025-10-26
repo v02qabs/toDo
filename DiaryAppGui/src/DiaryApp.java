@@ -79,12 +79,15 @@ public class DiaryApp extends JFrame {
         rightPanel.setBorder(BorderFactory.createTitledBorder("日付とエントリ一覧"));
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        JButton newButton = new JButton("新規作成 (New)");
+        newButton.addActionListener(e -> clearEntry());
         JButton saveButton = new JButton("保存 (Save)");
         saveButton.addActionListener(e -> saveNewEntry());
         JButton importButton = new JButton("画像インポート (Import)");
         importButton.addActionListener(e -> importImage());
         JButton loadButton = new JButton("再読込 (Load)");
         loadButton.addActionListener(e -> loadSelectedEntryContent());
+        buttonPanel.add(newButton);
         buttonPanel.add(saveButton);
         buttonPanel.add(importButton);
         buttonPanel.add(loadButton);
